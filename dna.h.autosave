@@ -1,0 +1,28 @@
+#ifndef DNA_H
+#define DNA_H
+
+#include <QList>
+#include <QVector>
+#include <QStringList>
+#include <QTime>
+#include <QtGlobal>
+#include <QDebug>
+
+class DNA
+{
+public:
+   QList<int*> dna;
+
+   DNA();
+
+   void setupList();
+   void fold(QString str);
+
+   // 00 01 10 11
+   static bool isSame(int a, int b) {return a^b;} // same is 1 and 4 , 2 and 3
+   static bool isDominant(int a) {return a&2 == 0;} //dominant 1 and 2
+   static bool isRivalry(int a, int b){return a&2 == b&2;}
+    
+};
+
+#endif // DNA_H
