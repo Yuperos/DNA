@@ -3,97 +3,97 @@
 DNA::DNA()
    {
    qsrand(QTime::currentTime().msec());
-   int i=0;
    setupList();
    }
 
 void DNA::setupList()
    {
-   //if(!dna.isEmpty()) dna.clear();
+   halfLen=0;
+   if(!dna.isEmpty()) dna.clear();
 
    QDebug debug(QtDebugMsg);
    debug.nospace();
    int nextInt=0;
-   int n = rand()%35+35;
-   int* tempArr = new int[n];
+   int n = rand()%35+100;
+   dna.append(QList<int>());
    for(int i=0; i<n; i++ ){
       if (nextInt==0) nextInt=rand();
-      tempArr[i] = nextInt%4;
+      dna[0].append(nextInt%4);
+      //if (i<n/2) dna[0].append(0); //nextInt%4
+      //if (i>=n/2) dna[0].append(2);
       nextInt/=4;
-      debug << tempArr[i];
+      debug << dna.at(0).at(i);
       }
+   debug << ' ' << dna.at(0).size();
    debug.~QDebug();
-   dna.append(tempArr);
    //qDebug() << *dna.at(0) << _msize(dna.at(0))/sizeof(dna.at(0)[0]);
    fold(0);
    }
 
 void DNA::fold(int index)
    {
-   int *src,*dst;
-   src = dna.at(index);
-   int arrSize = _msize(dna.at(index))/sizeof(dna.at(index)[0]);
-   dst = new int[arrSize*2];
+   int arrSize = dna.at(index).size();
 
-   int i=0;
-   int i1=arrSize/2-1;
-   int i2=arrSize/2;
-   if(i==arrSize) return;
+   int i2,i1;
+   int foldPoint = arrSize/2+(arrSize%2);
+
+   i2 = foldPoint;
+   i1 = foldPoint - 1;
+   dna.append(QList<int>());
+   QList<int> *dst = &dna[index+1];
+   QList<int> *src = &dna[index];
+
+   if(arrSize==0) return;
+   int inc=0;
    while(i1>=0 && i2<arrSize){
-      if (*(src+i1) == *(src+i2) && (i1>0 && i2<arrSize)){
-         //collect function needed here
-         int usedEqualMetod = 0;
-         switch(usedEqualMetod){
-            case 0: {
-               dst[i++] = *(src+i2);
-               dst[i++] = ~*(src+i2) & 3;
-               i1--;
-               i2++;
-               } break;
-            case 1: {
-               } break;
-            }
-         continue;
-         }
-      if (isSame(*(src+i1),*(src+i2))) {
-         dst[i++] = *(src+i1);
-         i1--;
-         i2++;
-      }else{
-         //swap priority needed here
-         if (isRivalry(*(src+i1),*(src+i2)) && *(src+i1) != *(src+i2)){
-            dst[i++] = *(src+i1);
-            i1--;
-         }else{
-            if (isDominant(*(src+i1))){
-               dst[i++] = *(src+i1);
-               i1--;
-            }else{
-               dst[i++] = *(src+i2);
-               i2++;
-               }
-            }
-         }
-
-
+      dst->append(combine((*src).at(i1),(*src).at(i2),inc));
+      i1-=inc&1;
+      i2+=inc>>1&1;
       }
    while(i1>0 || i2<arrSize){
       if (i1>0)
-         dst[i++] = *(src+i1--);
+         dst->append((*src).at(i1--));
       if (i2<arrSize)
-         dst[i++] = ~*(src+i2++) & 3;
+         dst->append(opposite(src->at(i2++)));
       }
-   int *newDst = new int[i];
+
+
    QDebug debug(QtDebugMsg);
-   //debug.nospace();
-   for(int j=0; j<i; j++){
-      *(newDst+j)=*(dst+j);
-      debug << *(dst+j);
+   debug.nospace();
+   halfLen += foldPoint;
+   for(int t=0; t<halfLen; t++)
+      debug << ' ';
+   for(int j=0; j<dst->size(); j++){
+      debug << dst->at(j);
       }
-   delete[] dst;
+   debug << ' ' << dna.at(index+1).size();
    debug.~QDebug();
-   dna.append(newDst);
-   if (i>6) fold(dna.size()-1);
+   if (dst->size()>6) fold(dna.size()-1);
+   }
+
+int DNA::combine(int a, int b, int &inc)
+   {
+   int op=3;
+
+   inc=0;
+   if (isSame(a,b)){
+      inc=3;
+      return a;
+      }
+
+   if (a==b){
+      inc=3;
+      return opposite(b);
+      }
+   op &= isRivalry(a,b) || isDominant(a)<<1;
+
+   switch(op){
+      case 0:{inc=2;} return b;
+      case 1:{inc=1;} return a;
+      case 2:{inc=2;} return b;
+      case 3:{inc=1;} return a;
+      default: {inc=-1;} return -1;
+      }
    }
 
 
